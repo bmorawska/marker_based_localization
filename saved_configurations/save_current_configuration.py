@@ -4,7 +4,7 @@ from datetime import datetime
 
 from localization.real_values import real_values
 
-configuration_name = "A4_aruco_25_30"
+configuration_name = "piwnica"
 if not os.path.exists(configuration_name):
     os.makedirs(configuration_name)
 
@@ -18,7 +18,7 @@ with open(os.path.join(configuration_name, 'metadata.txt'), 'w') as f:
     f.write(f"datetime: {date_string}\n")
     f.write("\n")
     f.write("# Pixel order\n")
-    f.write("# 0------------------------3\n")
+    f.write("# 1------------------------0\n")
     f.write("# |                        |\n")
     f.write("# |                        |\n")
     f.write("# |                        |\n")
@@ -26,7 +26,7 @@ with open(os.path.join(configuration_name, 'metadata.txt'), 'w') as f:
     f.write("# |                        |\n")
     f.write("# |                        |\n")
     f.write("# |                        |\n")
-    f.write("# 1------------------------2\n")
+    f.write("# 2------------------------3\n")
     f.write("\n")
     f.write("ArUco map:\n")
     for key in real_values:

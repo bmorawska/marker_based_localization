@@ -2,12 +2,14 @@ import pickle
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.mplot3d import Axes3D # <--- This is important for 3d plotting
+
 
 def get_cmap(n, name='hsv'):
     return plt.cm.get_cmap(name, n)
 
 
-configuration_name = "A4_aruco_25_30"
+configuration_name = "piwnica"
 
 with open(os.path.join(configuration_name, 'map.pickle'), 'rb') as f:
     real_values = pickle.load(f)

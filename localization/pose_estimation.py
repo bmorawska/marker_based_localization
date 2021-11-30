@@ -1,20 +1,29 @@
 import math
-
 import numpy as np
 from utils import ARUCO_DICT, aruco_display
 import cv2
 import sys
+import os
+import time
+
 from real_values import real_values
+
 
 # Initialization
 type = 'DICT_5X5_100'
 aruco = None
 calibration_matrix = np.load('../calibration/webcamera_creative/calibration_matrix.npy')
 distortion_coefficients = np.load('../calibration/webcamera_creative/distortion_coefficients.npy')
-video = cv2.VideoCapture(0)
+video = cv2.VideoCapture(2)
 arucoDict = cv2.aruco.Dictionary_get(ARUCO_DICT[type])
 arucoParams = cv2.aruco.DetectorParameters_create()
 arucoParams.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+
+record = True
+if record:
+    out = cv2.VideoWriter(os.path.join("../experiments/piwnica", 'video.avi'), cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 10, (640, 480))
+    f = open(os.path.join("../experiments/piwnica", 'localization.csv'), "w")
+    f.write(f"time,x,y,z,roll,pitch,yaw\n")
 
 # Verify that the supplied ArUCo tag exists and is supported by OpenCV
 if ARUCO_DICT.get(type, None) is None:
@@ -67,14 +76,24 @@ while True:
         cv2.putText(image, msg_position, (20, image.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.putText(image, msg_orientation, (20, image.shape[0] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.imshow("Image preview", detected_markers)
+        if record:
+            out.write(detected_markers)
+            f.write(f"{time.time()},{pos[0]},{pos[1]},{pos[2]},{roll},{pitch},{yaw}\n")
+
     else:
         cv2.rectangle(image, (10, image.shape[0] - 80), (165, image.shape[0] - 10), (0, 0, 0), cv2.FILLED)
         cv2.putText(image, "not tracked", (20, image.shape[0] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         cv2.imshow("Image preview", image)
+        if record:
+            out.write(image)
+            f.write(f"{time.time()},,,,,,\n")
 
     key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):
         break
 
+if record:
+    f.close()
+    out.release()
 cv2.destroyAllWindows()
 video.release()
