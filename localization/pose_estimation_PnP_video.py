@@ -27,6 +27,9 @@ arucoDict = cv2.aruco.Dictionary_get(ARUCO_DICT[type])
 arucoParams = cv2.aruco.DetectorParameters_create()
 arucoParams.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
 
+prev_frame_time = 0
+new_frame_time = 0
+
 rpy_image = cv2.imread('../rpy.png', cv2.IMREAD_UNCHANGED)
 rpy_image_x1, rpy_image_y1, rpy_image_x2, rpy_image_y2 = 10, 10, rpy_image.shape[1] + 10, rpy_image.shape[0] + 10
 
@@ -38,6 +41,8 @@ if load_pickle:
 
 record = settings['results']['record']
 if record:
+    if not os.path.exists(settings['results']['output_dir']):
+        os.makedirs(settings['results']['output_dir'])
     out = cv2.VideoWriter(os.path.join(os.path.join('..', settings['results']['output_dir']),
                                        settings['results']['movie']['movie_filename']),
                           cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
@@ -60,6 +65,8 @@ while True:
 
     if ret is False:
         break
+
+    new_frame_time = time.time()
 
     corners, ids, rejected = cv2.aruco.detectMarkers(image,
                                                      arucoDict,
@@ -97,6 +104,9 @@ while True:
         pitch = math.asin(R[2][0]) * 180 / math.pi
         yaw = math.atan2(-R[1][0], R[0][0]) * 180 / math.pi
 
+        fps = 1/(new_frame_time - prev_frame_time)
+        prev_frame_time = new_frame_time
+
         # Display results
         detected_markers = aruco_display(corners, ids, rejected, image)
         msg_position = "[m]    x   : {0:.2f}".format(pos[0]) + "    y    : {0:.2f}".format(pos[1]) + "  z  : {0:.2f}".format(pos[2])
@@ -104,6 +114,7 @@ while True:
         cv2.rectangle(image, (10, image.shape[0] - 80), (image.shape[1] - 10, image.shape[0] - 10), (0, 0, 0), cv2.FILLED)
         cv2.putText(image, msg_position, (20, image.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         cv2.putText(image, msg_orientation, (20, image.shape[0] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.putText(image, f"{int(fps)} fps", (image.shape[1] - 100, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
         image[rpy_image_y1:rpy_image_y2, rpy_image_x1:rpy_image_x2] = \
             image[rpy_image_y1:rpy_image_y2, rpy_image_x1:rpy_image_x2] * (1 - rpy_image[:, :, 3:] / 255) + \
             rpy_image[:, :, :3] * (rpy_image[:, :, 3:] / 255)
@@ -114,8 +125,12 @@ while True:
             f.write(f"{time.time()},{pos[0]},{pos[1]},{pos[2]},{roll},{pitch},{yaw}\n")
 
     else:
+        fps = 1/(new_frame_time - prev_frame_time)
+        prev_frame_time = new_frame_time
+
         cv2.rectangle(image, (10, image.shape[0] - 80), (165, image.shape[0] - 10), (0, 0, 0), cv2.FILLED)
         cv2.putText(image, "not tracked", (20, image.shape[0] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(image, f"{int(fps)} fps", (image.shape[1] - 100, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
         image[rpy_image_y1:rpy_image_y2, rpy_image_x1:rpy_image_x2] = \
             image[rpy_image_y1:rpy_image_y2, rpy_image_x1:rpy_image_x2] * (1 - rpy_image[:, :, 3:] / 255) + \
             rpy_image[:, :, :3] * (rpy_image[:, :, 3:] / 255)
