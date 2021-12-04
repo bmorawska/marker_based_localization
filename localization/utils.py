@@ -27,7 +27,6 @@ ARUCO_DICT = {
 
 def aruco_display(corners, ids, rejected, image):
     if len(corners) > 0:
-        # flatten the ArUco IDs list
         ids = ids.flatten()
         # loop over the detected ArUCo corners
         for (markerCorner, markerID) in zip(corners, ids):
@@ -45,8 +44,7 @@ def aruco_display(corners, ids, rejected, image):
             cv2.line(image, topRight, bottomRight, (0, 255, 0), 2)
             cv2.line(image, bottomRight, bottomLeft, (0, 255, 0), 2)
             cv2.line(image, bottomLeft, topLeft, (0, 255, 0), 2)
-            # compute and draw the center (x, y)-coordinates of the ArUco
-            # marker
+            # compute and draw the center (x, y)-coordinates of the ArUco marker
             cX = int((topLeft[0] + bottomRight[0]) / 2.0)
             cY = int((topLeft[1] + bottomRight[1]) / 2.0)
             cv2.circle(image, (cX, cY), 4, (0, 0, 255), -1)

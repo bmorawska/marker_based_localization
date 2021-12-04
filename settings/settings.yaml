@@ -1,0 +1,29 @@
+aruco:
+  type: 'DICT_5X5_100'
+  size: 0.08
+
+image:
+  calibration_matrix: './calibration/webcamera_creative/calibration_matrix.npy'
+  distortion_matrix: './calibration/webcamera_creative/distortion_coefficients.npy'
+
+map:
+  load_pickle: True
+  pickle_path: './saved_configurations/A4_aruco_25_30/map.pickle'
+
+results:
+  record: True,
+  output_dir: './experiments/piwnica'
+  csv_filename: 'localization.csv'
+  movie:
+    movie_filename: 'video.avi'
+    fps: 10
+    resolution:
+        width: 640
+        height: 480
+
+input:
+  camera:
+    id: 2
+  photo:
+    input_dir: './img'
+    filename: 'test2.jpg'
