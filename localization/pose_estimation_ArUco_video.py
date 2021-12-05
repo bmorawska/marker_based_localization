@@ -1,15 +1,15 @@
 import math
 import numpy as np
-from utils import ARUCO_DICT, aruco_display
 import cv2
 import sys
 import os
 import time
-import pickle
 import yaml
 import statistics
+import uuid
+from playsound import playsound
 
-from real_values import real_values
+from utils import ARUCO_DICT, aruco_display
 
 # Loading settings file
 with open("../settings/settings.yaml", "r") as settings_stream:
@@ -31,19 +31,13 @@ arucoParams.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
 prev_frame_time = 0
 new_frame_time = 0
 
-rpy_image = cv2.imread('../rpy.png', cv2.IMREAD_UNCHANGED)
+rpy_image = cv2.imread('../additions/rpy.png', cv2.IMREAD_UNCHANGED)
 rpy_image_x1, rpy_image_y1, rpy_image_x2, rpy_image_y2 = 10, 10, rpy_image.shape[1] + 10, rpy_image.shape[0] + 10
-
-load_pickle = settings['map']['load_pickle']
-if load_pickle:
-    with open(os.path.join('..', settings['map']['pickle_path']), 'rb') as f:
-        real_values = pickle.load(f)
-        print("Loaded configuration from file.")
 
 record = settings['results']['record']
 if record:
     if not os.path.exists(settings['results']['output_dir']):
-        os.makedirs(settings['results']['output_dir'])
+        os.makedirs(os.path.join('..', settings['results']['output_dir']))
 
     out = cv2.VideoWriter(os.path.join(os.path.join('..', settings['results']['output_dir']),
                                        settings['results']['movie']['movie_filename']),
@@ -54,6 +48,17 @@ if record:
 
     f = open(os.path.join(os.path.join('..', settings['results']['output_dir']), settings['results']['csv_filename']), "w")
     f.write(f"time,x,y,z,roll,pitch,yaw\n")
+
+snapshot = settings['results']['snapshot']
+if snapshot:
+    if not os.path.exists(os.path.join('..', settings['results']['output_dir'])):
+        os.makedirs(os.path.join('..', settings['results']['output_dir']))
+
+    if not os.path.exists(os.path.join(os.path.join('..', settings['results']['output_dir']), 'snapshot.csv')):
+        snapshot_file = open(os.path.join(os.path.join('..', settings['results']['output_dir']), 'snapshot.csv'), "a")
+        snapshot_file.write(f"key,time,x,y,z,roll,pitch,yaw\n")
+    else:
+        snapshot_file = open(os.path.join(os.path.join('..', settings['results']['output_dir']), 'snapshot.csv'), "a")
 
 
 if ARUCO_DICT.get(type, None) is None:
@@ -74,6 +79,7 @@ while True:
                                                      parameters=arucoParams,
                                                      cameraMatrix=calibration_matrix,
                                                      distCoeff=distortion_coefficients)
+
     # If ArUco detected in frame
     if len(corners) > 0:
         rolls = []
@@ -131,10 +137,12 @@ while True:
         image[rpy_image_y1:rpy_image_y2, rpy_image_x1:rpy_image_x2] = \
             image[rpy_image_y1:rpy_image_y2, rpy_image_x1:rpy_image_x2] * (1 - rpy_image[:, :, 3:] / 255) + \
             rpy_image[:, :, :3] * (rpy_image[:, :, 3:] / 255)
-        cv2.imshow("Image preview", detected_markers)
+        cv2.imshow("ArUco", detected_markers)
         if record:
             out.write(detected_markers)
             f.write(f"{time.time()},{x},{y},{z},{roll},{pitch},{yaw}\n")
+        if snapshot:
+            snapshot_msg = f"{time.time()},{x},{y},{z},{roll},{pitch},{yaw}\n"
 
     else:
         fps = 1/(new_frame_time - prev_frame_time)
@@ -147,18 +155,29 @@ while True:
         image[rpy_image_y1:rpy_image_y2, rpy_image_x1:rpy_image_x2] = \
             image[rpy_image_y1:rpy_image_y2, rpy_image_x1:rpy_image_x2] * (1 - rpy_image[:, :, 3:] / 255) + \
             rpy_image[:, :, :3] * (rpy_image[:, :, 3:] / 255)
-        cv2.imshow("Image preview", image)
+        cv2.imshow("ArUco", image)
         if record:
             out.write(image)
             f.write(f"{time.time()},,,,,,\n")
+        if snapshot:
+            snapshot_msg = f"{time.time()},,,,,,\n"
 
     key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):
         break
+    elif snapshot and key == ord("s"):
+        playsound('../additions/shutter_sound.wav', False)
+        keyname = uuid.uuid4()
+        snapshot_file.write(f"{keyname},")
+        snapshot_file.write(snapshot_msg)
+        cv2.imwrite(os.path.join(os.path.join('..', settings['results']['output_dir']), f"{keyname}.png"), image)
+        print(f'Snapshot saved: {snapshot_msg}')
 
 # Finishing kindly
 if record:
     f.close()
     out.release()
+if snapshot:
+    snapshot_file.close()
 cv2.destroyAllWindows()
 video.release()

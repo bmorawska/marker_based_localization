@@ -1,13 +1,15 @@
 import math
 import numpy as np
-from utils import ARUCO_DICT, aruco_display
 import cv2
 import sys
 import os
 import time
 import pickle
 import yaml
+import uuid
+from playsound import playsound
 
+from utils import ARUCO_DICT, aruco_display
 from real_values import real_values
 
 # Loading settings file
@@ -30,7 +32,7 @@ arucoParams.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
 prev_frame_time = 0
 new_frame_time = 0
 
-rpy_image = cv2.imread('../rpy.png', cv2.COLOR_BGR2GRAY)
+rpy_image = cv2.imread('../additions/rpy.png', cv2.COLOR_BGR2GRAY)
 rpy_image_x1, rpy_image_y1, rpy_image_x2, rpy_image_y2 = 10, 10, rpy_image.shape[1] + 10, rpy_image.shape[0] + 10
 
 load_pickle = settings['map']['load_pickle']
@@ -38,6 +40,8 @@ if load_pickle:
     with open(os.path.join('..', settings['map']['pickle_path']), 'rb') as f:
         real_values = pickle.load(f)
         print("Loaded configuration from file.")
+
+markers_in_db = real_values.keys()
 
 record = settings['results']['record']
 if record:
@@ -52,6 +56,17 @@ if record:
 
     f = open(os.path.join(os.path.join('..', settings['results']['output_dir']), settings['results']['csv_filename']), "w")
     f.write(f"time,x,y,z,roll,pitch,yaw\n")
+
+snapshot = settings['results']['snapshot']
+if snapshot:
+    if not os.path.exists(os.path.join('..', settings['results']['output_dir'])):
+        os.makedirs(os.path.join('..', settings['results']['output_dir']))
+
+    if not os.path.exists(os.path.join(os.path.join('..', settings['results']['output_dir']), 'snapshot.csv')):
+        snapshot_file = open(os.path.join(os.path.join('..', settings['results']['output_dir']), 'snapshot.csv'), "a")
+        snapshot_file.write(f"key,time,x,y,z,roll,pitch,yaw\n")
+    else:
+        snapshot_file = open(os.path.join(os.path.join('..', settings['results']['output_dir']), 'snapshot.csv'), "a")
 
 
 if ARUCO_DICT.get(type, None) is None:
@@ -84,12 +99,17 @@ while True:
         pv = np.empty((0, 2))
 
         for (markerCorner, markerID) in zip(corners, ids):
+            if markerID not in markers_in_db:
+                continue
             pv = np.vstack((pv, np.squeeze(markerCorner, axis=0)))
             try:
                 rv = np.vstack((rv, real_values[markerID]))
             except KeyError as e:
                 print(e)
                 continue
+
+        if len(rv) < 4:
+            continue
 
         try:
             success, rotation_vector, translation_vector = cv2.solvePnP(rv,
@@ -125,6 +145,8 @@ while True:
         if record:
             out.write(detected_markers)
             f.write(f"{time.time()},{pos[0]},{pos[1]},{pos[2]},{roll},{pitch},{yaw}\n")
+        if snapshot:
+            snapshot_msg = f"{time.time()},{pos[0]},{pos[1]},{pos[2]},{roll},{pitch},{yaw}\n"
 
     else:
         fps = 1/(new_frame_time - prev_frame_time)
@@ -139,15 +161,26 @@ while True:
         if record:
             out.write(image)
             f.write(f"{time.time()},,,,,,\n")
+        if snapshot:
+            snapshot_msg = f"{time.time()},,,,,,\n"
 
     key = cv2.waitKey(1) & 0xFF
     if key == ord("q"):
         break
+    elif snapshot and key == ord("s"):
+        playsound('../additions/shutter_sound.wav', False)
+        keyname = uuid.uuid4()
+        snapshot_file.write(f"{keyname},")
+        snapshot_file.write(snapshot_msg)
+        cv2.imwrite(os.path.join(os.path.join('..', settings['results']['output_dir']), f"{keyname}.png"), image)
+        print(f'Snapshot saved: {snapshot_msg}')
 
 
 # Finishing kindly
 if record:
     f.close()
     out.release()
+if snapshot:
+    snapshot_file.close()
 cv2.destroyAllWindows()
 video.release()

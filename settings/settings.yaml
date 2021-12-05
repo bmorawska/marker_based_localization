@@ -11,7 +11,8 @@ map:
   pickle_path: './saved_configurations/A4_aruco_25_30/map.pickle'
 
 results:
-  record: True,
+  snapshot: True
+  record: False
   output_dir: './experiments/piwnica'
   csv_filename: 'localization.csv'
   movie:

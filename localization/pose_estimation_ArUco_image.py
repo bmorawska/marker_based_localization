@@ -1,6 +1,5 @@
 import math
 import numpy as np
-from utils import ARUCO_DICT, aruco_display
 import cv2
 import sys
 import os
@@ -8,6 +7,7 @@ import pickle
 import yaml
 import statistics
 
+from utils import ARUCO_DICT, aruco_display
 from real_values import real_values
 
 # Loading settings file
