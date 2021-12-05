@@ -174,7 +174,7 @@ while True:
         snapshot_file.write(f"{keyname},")
         snapshot_file.write(snapshot_msg)
         cv2.imwrite(os.path.join(os.path.join('..', settings['results']['output_dir']), f"{keyname}.png"), image)
-        print(f'Snapshot saved: {snapshot_msg}')
+        print(f'[{keyname}] Snapshot saved: {snapshot_msg}')
 
 
 # Finishing kindly

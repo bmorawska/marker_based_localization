@@ -8,12 +8,12 @@ image:
 
 map:
   load_pickle: True
-  pickle_path: './saved_configurations/A4_aruco_25_30/map.pickle'
+  pickle_path: './saved_configurations/piwnica/map.pickle'
 
 results:
   snapshot: True
-  record: False
-  output_dir: './experiments/piwnica'
+  record: True
+  output_dir: './experiments/localization/'
   csv_filename: 'localization.csv'
   movie:
     movie_filename: 'video.avi'

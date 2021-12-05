@@ -1,1 +1,3 @@
 *.avi
+/experiments/*.png
+/experiments/*.avi
