@@ -1,3 +1,6 @@
 *.avi
 /experiments/*.png
 /experiments/*.avi
+.idea/
+venv/
+__pycache__/

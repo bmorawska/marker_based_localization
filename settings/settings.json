@@ -1,0 +1,29 @@
+{
+  "aruco": {
+    "type": "DICT_5X5_100",
+    "size": 0.1
+  },
+  "camera": {
+    "id": 0,
+    "calibration_matrix": "./calibration/webcamera_creative/calibration_matrix.npy",
+    "distortion_matrix": "./calibration/webcamera_creative/distortion_coefficients.npy"
+  },
+  "map": "./settings/markers.json",
+  "movie":
+  {
+    "status": false,
+    "filename": "test.avi",
+    "fps": 10,
+    "resolution": [640, 480]
+  },
+  "snapshot":
+  {
+    "status": true
+  },
+  "websocket":
+  {
+    "status": true,
+    "frequency": 3
+  }
+
+}
